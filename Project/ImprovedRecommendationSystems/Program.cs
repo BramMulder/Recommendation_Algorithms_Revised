@@ -15,7 +15,6 @@ namespace ImprovedRecommendationSystems
             var data = CsvReader.ReadData();
 
             var userId = 186;
-            var itemId = 1;
 
             //User-Item
             KNearestNeighbours kNearestNeighbours = new KNearestNeighbours(0.35);

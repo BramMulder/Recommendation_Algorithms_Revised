@@ -10,7 +10,9 @@ namespace ImprovedRecommendationSystems.ItemItem
         {
             //Select all Item Ids per User
             var movieIds = dictionary.Values.Select(x => x.Keys).ToArray();
+            //Get all unique Ids in a sorted list
             var uniqueIdsOrdered = GetAllUniqueIds(movieIds);
+
 
             var deviationsDictionary = GenerateDeviationsDictionary(dictionary, uniqueIdsOrdered);
             
@@ -44,22 +46,25 @@ namespace ImprovedRecommendationSystems.ItemItem
         {
             var deviations = new Dictionary<int, Dictionary<int, DeviationObject>>();
 
+            //Loop over half the data and calulate the deviations
             for (int i = 0; i < uniqueIds.Length; i++)
             {
+                //Add a new row
                 deviations.Add(uniqueIds[i], new Dictionary<int, DeviationObject>());
                 for (int j = i; j < uniqueIds.Length; j++)
                 {
+                    //Skip comparing the item to itself
                     if (i == j)
                     {
                         deviations[uniqueIds[i]].Add(uniqueIds[j], new DeviationObject());
                         continue;
                     }
-                    var dev = Slope.GenerateDeviationObject(data, uniqueIds[i], uniqueIds[j]);
-                    dev.Deviation = dev.Deviation;
-                    deviations[uniqueIds[i]].Add(uniqueIds[j], dev );
+                    //Add the deviation values at the correct index
+                    deviations[uniqueIds[i]].Add(uniqueIds[j], Slope.GenerateDeviationObject(data, uniqueIds[i], uniqueIds[j]));
                 }
             }
 
+            //Loop over the other half and inverse the deviation values
             for (int a = 1; a < uniqueIds.Length; a++)
             {
                 for (int b = 0; b < a; b++)
@@ -83,11 +88,16 @@ namespace ImprovedRecommendationSystems.ItemItem
 
         private static List<Tuple<double, double>> FindTopKSuggestions(Dictionary<int, Dictionary<int, double>> data, Dictionary<int, Dictionary<int, DeviationObject>> deviationsDictionary, int k, int targetUserId)
         {
+            //Select all Ids
             var movieIds = deviationsDictionary.Keys.ToList();
+            //Select the data from the target user
             var userData = data[targetUserId];
             List<Tuple<double, double>> topRatings = new List<Tuple<double, double>>();
+
+            //Loop al items
             foreach (var movieId in movieIds)
             {
+                //If the user hasn't rated the item yet, add it to the list
                 if (!userData.ContainsKey(movieId))
                 {
                     double prediction = PredictedRating.PredictRating(data, deviationsDictionary, targetUserId, movieId);
@@ -103,6 +113,7 @@ namespace ImprovedRecommendationSystems.ItemItem
 
             var userRatedList = user.Keys.ToList();
 
+            //Update deviations after a new rating has been added by a user
             foreach (var ratingId in userRatedList)
             {
                 var deviation = Slope.GenerateDeviationObject(data, userId, ratingId);
